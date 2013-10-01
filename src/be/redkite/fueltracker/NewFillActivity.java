@@ -88,7 +88,7 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 	}
 
 	public void addNewFill() {
-		// TODO Call logic class and add the new record
+	    
 		this.finish();
 	}
 
