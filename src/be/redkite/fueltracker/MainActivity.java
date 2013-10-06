@@ -205,9 +205,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			String[] from = { "title", "subtitle" };
 			int[] to = { android.R.id.text1, android.R.id.text2 };
 
-			//SimpleAdapter adapter = new SimpleAdapter(getActivity(), list,
-			//		android.R.layout.simple_list_item_2, from, to);
-			//setListAdapter(adapter);
+//			SimpleAdapter adapter = new SimpleAdapter(getActivity(), list,
+//					android.R.layout.simple_list_item_2, from, to);
+//			setListAdapter(adapter);
 		}
 
 		@Override
@@ -217,73 +217,4 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		    Toast.makeText(getActivity(), item.get("title") + " selected", Toast.LENGTH_LONG).show();
 		}
 	} 
-	/*
-	public static class FillListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
-
-		// This is the Adapter being used to display the list's data
-		SimpleCursorAdapter mAdapter;
-
-		// These are the Fill rows that we will retrieve
-		static final String[] PROJECTION = new String[] {FillReaderContract.FillEntry._ID,
-			FillReaderContract.FillEntry.COLUMN_NAME_ODOMETER};
-
-		// This is the select criteria
-		//        static final String SELECTION = "((" + 
-		//                ContactsContract.Data.DISPLAY_NAME + " NOTNULL) AND (" +
-		//                ContactsContract.Data.DISPLAY_NAME + " != '' ))";
-
-		public FillListFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-			// For the cursor adapter, specify which columns go into which views
-			String[] fromColumns = {FillReaderContract.FillEntry.COLUMN_NAME_ODOMETER};
-			int[] toViews = {android.R.id.text1};
-
-			// Create an empty adapter we will use to display the loaded data.
-			// We pass null for the cursor, then update it in onLoadFinished()
-			mAdapter = new SimpleCursorAdapter(this, 
-					android.R.layout.two_line_list_item, null,
-					fromColumns, toViews, 0);
-
-			// Prepare the loader.  Either re-connect with an existing one,
-			// or start a new one.
-			getLoaderManager().initLoader(0, null, this);
-
-			View rootView = inflater.inflate(R.layout.fragment_fill_list, container, false);
-			ListView fillList = (ListView) rootView.findViewById(R.id.fill_list_view);
-			fillList.setAdapter(mAdapter);
-
-			return  rootView;
-		}
-
-		// Called when a new Loader needs to be created
-		@Override
-		public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-			// Now create and return a CursorLoader that will take care of
-			// creating a Cursor for the data being displayed.
-			return new CursorLoader(this, FillReaderContract.FillEntry._ID,
-					PROJECTION, SELECTION, null, null);
-		}
-
-		// Called when a previously created loader has finished loading
-		@Override
-		public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-			// Swap the new cursor in.  (The framework will take care of closing the
-			// old cursor once we return.)
-			mAdapter.swapCursor(data);
-		}
-
-		// Called when a previously created loader is reset, making the data unavailable
-		@Override
-		public void onLoaderReset(Loader<Cursor> loader) {
-			// This is called when the last Cursor provided to onLoadFinished()
-			// above is about to be closed.  We need to make sure we are no
-			// longer using it.
-			mAdapter.swapCursor(null);			
-		}
-	}*/
-
 }
