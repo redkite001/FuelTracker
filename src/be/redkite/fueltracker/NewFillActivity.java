@@ -16,6 +16,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.TextView.OnEditorActionListener;
 import android.support.v4.app.NavUtils;
 
@@ -88,7 +89,7 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 	}
 
 	public void addNewFill() {
-	    
+		Toast.makeText(this, "New fill added!", Toast.LENGTH_LONG).show();
 		this.finish();
 	}
 
