@@ -7,8 +7,10 @@ import java.util.Map;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import be.redkite.fueltracker.FillReaderContract.FillEntry;
+import android.database.sqlite.SQLiteException;
+import be.redkite.fueltracker.FillContract.FillEntry;
 
 public class Logic {
 
@@ -19,7 +21,7 @@ public class Logic {
 
 	private Logic(Context context) {
 		mDbHelper = new FillsOpenHelper(context);
-		db = mDbHelper.getWritableDatabase();
+		db = mDbHelper.getReadableDatabase();
 	}
 
 	public static Logic getInstance(Context context) {
@@ -96,35 +98,57 @@ public class Logic {
 		ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
 
 		String[] projection = {
-				FillEntry._ID,
+				//				FillEntry._ID,
+				FillEntry.COLUMN_NAME_DATE,
+				FillEntry.COLUMN_NAME_PRICE,
 				FillEntry.COLUMN_NAME_ODOMETER,
-				FillEntry.COLUMN_NAME_DATE
+				FillEntry.COLUMN_NAME_TRIP,
+				FillEntry.COLUMN_NAME_VOLUME
 		};
 
 		String sortOrder =
 				FillEntry.COLUMN_NAME_DATE + " DESC";
 
-		Cursor cur = db.query(
-				FillEntry.TABLE_NAME,                     // The table to query
-				projection,                               // The columns to return
-				null,                                     // The columns for the WHERE clause
-				null,                                     // The values for the WHERE clause
-				null,                                     // don't group the rows
-				null,                                     // don't filter by row groups
-				sortOrder                                 // The sort order
-				);
-		
-        cur.moveToFirst();
-        while (cur.isAfterLast() == false) {
-        	HashMap<String, String> item = new HashMap<String, String>();
-			item.put("title", cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE)));
-			item.put("subtitle", cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_ODOMETER)));
-			list.add(item);
-        	
-       	    cur.moveToNext();
-        }
-        cur.close();
-        
+		try {
+			Cursor cur = db.query(
+					FillEntry.TABLE_NAME,                     // The table to query
+					projection,                               // The columns to return
+					null,                                     // The columns for the WHERE clause
+					null,                                     // The values for the WHERE clause
+					null,                                     // don't group the rows
+					null,                                     // don't filter by row groups
+					sortOrder                                 // The sort order
+					);
+
+			cur.moveToFirst();
+			while (cur.isAfterLast() == false) {
+				String title = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE))
+						+ " - "
+						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_PRICE)) + " €";
+				String subtitle = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_ODOMETER)) + " km"
+						+ " - "
+						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_TRIP)) + " km"
+						+ " - "
+						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l";
+				
+				HashMap<String, String> item = new HashMap<String, String>();
+				item.put("title", title);
+				item.put("subtitle", subtitle);
+				list.add(item);
+
+				cur.moveToNext();
+			}
+			cur.close();
+		} catch (SQLiteException e) {
+			// TODO Found a better way to handle non-existing table!
+			// Table not found... it is most probably empty
+			db.execSQL(FillsOpenHelper.SQL_CREATE_ENTRIES);
+		}
+
 		return list;
+	}
+
+	public void clearDB() {
+		db.execSQL(FillsOpenHelper.SQL_DELETE_ENTRIES);
 	}
 }

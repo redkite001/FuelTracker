@@ -6,15 +6,21 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.app.ActionBar;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +31,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+public class MainActivity extends FragmentActivity implements ActionBar.TabListener, EraseDBDialogFragment.OnDialogAcceptedListener {
 
 	/**
 	 * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -36,11 +42,14 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	 * {@link android.support.v4.app.FragmentStatePagerAdapter}.
 	 */
 	SectionsPagerAdapter mSectionsPagerAdapter;
+	FillListFragment m_fillListFragment;
 
 	/**
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
+	
+	static final int ADD_NEW_FILL_REQUEST = 1;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -114,20 +123,46 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		case R.id.action_settings:
 			openSettings();
 			return true;
+		case R.id.action_cleardb:
+			clearDB();
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 	}
 
-	private void openSettings() {
-		Intent intent = new Intent(this, SettingsActivity.class);
-		startActivity(intent);
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == ADD_NEW_FILL_REQUEST) {
+	        if (resultCode == RESULT_OK) {
+        		refreshData();
+	        }
+		}
 	}
 
 	private void openNewFill() {
 		Intent intent = new Intent(this, NewFillActivity.class);
+		startActivityForResult(intent, ADD_NEW_FILL_REQUEST);
+	}	
+
+	private void openSettings() {
+		Intent intent = new Intent(this, SettingsActivity.class);
 		startActivity(intent);
 	}
+	
+	private void clearDB() {
+		DialogFragment newFragment = new EraseDBDialogFragment();
+	    newFragment.show(getSupportFragmentManager(), "cleardb");
+	}
+	
+	public void onDialogAcceptedListener() {
+		refreshData();
+    }
+	
+	private void refreshData() {
+		m_fillListFragment.refresh();
+	}
+	
 
 	/**
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -143,7 +178,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		public Fragment getItem(int position) {
 			switch (position) {
 			case 0:
-				return new FillListFragment();
+				return m_fillListFragment = new FillListFragment();
 			case 1:
 				return new DummySectionFragment();
 			case 2:
@@ -198,23 +233,32 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 	public static class FillListFragment extends ListFragment {
 
+		public static SimpleAdapter m_adapter;
+		public static ArrayList<Map<String, String>> m_data;
+		
 		@Override
 		public void onActivityCreated(Bundle savedInstanceState) {
 			super.onActivityCreated(savedInstanceState);
-			ArrayList<Map<String, String>> list = Logic.getInstance(getActivity()).getPrettyFills();
+			m_data = Logic.getInstance(getActivity()).getPrettyFills();
 			String[] from = { "title", "subtitle" };
 			int[] to = { android.R.id.text1, android.R.id.text2 };
 
-//			SimpleAdapter adapter = new SimpleAdapter(getActivity(), list,
-//					android.R.layout.simple_list_item_2, from, to);
-//			setListAdapter(adapter);
+			System.out.println("NEW ADAPTER");
+			m_adapter = new SimpleAdapter(getActivity(), m_data, android.R.layout.simple_list_item_2, from, to);
+			setListAdapter(m_adapter);
 		}
-
+		
 		@Override
 		public void onListItemClick(ListView l, View v, int position, long id) {
 			super.onListItemClick(l, v, position, id);
 			HashMap<String, String> item = (HashMap<String, String>) getListAdapter().getItem(position);
 		    Toast.makeText(getActivity(), item.get("title") + " selected", Toast.LENGTH_LONG).show();
+		}
+		
+		public void refresh() {
+			m_data.clear();
+			m_data.addAll(Logic.getInstance(getActivity()).getPrettyFills());
+			m_adapter.notifyDataSetChanged();
 		}
 	} 
 }

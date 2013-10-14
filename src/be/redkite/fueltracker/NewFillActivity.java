@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +23,10 @@ import android.support.v4.app.NavUtils;
 
 public class NewFillActivity extends Activity implements OnDateSelectedListener {
 
+	int selected_year;
+	int selected_month;
+	int selected_day;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -89,7 +94,17 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 	}
 
 	public void addNewFill() {
+		double odometer = Double.parseDouble(((EditText)findViewById(R.id.odometer)).getText().toString());
+		double trip = Double.parseDouble(((EditText)findViewById(R.id.trip)).getText().toString());
+		double volume = Double.parseDouble(((EditText)findViewById(R.id.volume)).getText().toString());
+		boolean isFullTank = ((CheckBox)findViewById(R.id.full_tank)).isActivated();
+		double price = Double.parseDouble(((EditText)findViewById(R.id.price)).getText().toString());
+		String note = ((EditText)findViewById(R.id.notes)).getText().toString();
+		
+		Logic.getInstance(this).addNewFill(selected_year, selected_month, selected_day, odometer, trip, volume, isFullTank, price, note);
+		
 		Toast.makeText(this, "New fill added!", Toast.LENGTH_LONG).show();
+		setResult(RESULT_OK);
 		this.finish();
 	}
 
@@ -101,5 +116,8 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 		
 		Button button = (Button)findViewById(R.id.date);
 		button.setText(dateFormat.format(c.getTime()));
+		selected_year = year;
+		selected_month = month;
+		selected_day = day;
 	}
 }
