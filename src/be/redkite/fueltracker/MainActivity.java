@@ -1,9 +1,12 @@
 package be.redkite.fueltracker;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import be.redkite.fueltracker.FillContract.FillEntry;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -21,6 +24,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -238,36 +242,53 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 	public static class FillListFragment extends ListFragment {
 
-		public static SimpleAdapter m_adapter;
-		public static ArrayList<Map<String, String>> m_data;
+		public static SimpleCursorAdapter m_adapter;
+		public static Cursor m_cursor;
 
 		@Override
 		public void onActivityCreated(Bundle savedInstanceState) {
 			super.onActivityCreated(savedInstanceState);
-			m_data = Logic.getInstance(getActivity()).getPrettyFills();
-			String[] from = { "title", "subtitle" };
+			m_cursor = Logic.getInstance(getActivity()).getFills();
+			String[] from = { "odometer", "price" };
 			int[] to = { android.R.id.text1, android.R.id.text2 };
 
-			m_adapter = new SimpleAdapter(getActivity(), m_data, android.R.layout.simple_list_item_2, from, to);
+			m_adapter = new SimpleCursorAdapter(getActivity(), android.R.layout.simple_list_item_2, m_cursor, from, to);
+			m_adapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
+				public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+					if (view.getId() == android.R.id.text1) {
+						
+						String title = cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE))
+								+ " - "
+								+ cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_PRICE)) + " €";
+
+						((TextView)view).setText(title);
+						return true;
+
+					} else if (view.getId() == android.R.id.text2){
+						double conso_100 = UtilClass.parseDoubleSafely(cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_CONSO100)));
+						DecimalFormat df = new DecimalFormat("#.##");
+						String conso_100_str = df.format(conso_100);
+						
+						String subtitle = cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_ODOMETER)) + " km"
+								+ " - "
+								+ cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_TRIP)) + " km"
+								+ " - "
+								+ cursor.getString(cursor.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l"
+								+ " - "
+								+ conso_100_str + " l/100";
+						
+						((TextView)view).setText(subtitle);
+						return true;
+					}
+					return false;}
+
+			});
+
+
 			setListAdapter(m_adapter);
 
 			registerForContextMenu(getListView());
-			//			getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
-			//
-			//				@Override
-			//	            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
-			//					Toast.makeText(getActivity(), "On long click listener", Toast.LENGTH_LONG).show();
-			//		            return true;
-			//	            }
-			//	        }); 
 		}
-
-		/*		@Override
-		public void onListItemClick(ListView l, View v, int position, long id) {
-			super.onListItemClick(l, v, position, id);
-			HashMap<String, String> item = (HashMap<String, String>) getListAdapter().getItem(position);
-		    Toast.makeText(getActivity(), item.get("title") + " selected", Toast.LENGTH_LONG).show();
-		}*/
 
 		@Override
 		public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
@@ -299,9 +320,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		}
 
 		public void refresh() {
-			m_data.clear();
-			m_data.addAll(Logic.getInstance(getActivity()).getPrettyFills());
-			m_adapter.notifyDataSetChanged();
+			m_cursor.requery();
 		}
 	} 
 }

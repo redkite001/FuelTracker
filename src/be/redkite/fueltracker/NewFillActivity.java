@@ -97,10 +97,10 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 		double odometer = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.odometer)).getText().toString());
 		double trip = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.trip)).getText().toString());
 		double volume = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.volume)).getText().toString());
-		boolean isFullTank = ((CheckBox)findViewById(R.id.full_tank)).isActivated();
+		boolean isFullTank = ((CheckBox)findViewById(R.id.full_tank)).isChecked();
 		double price = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.price)).getText().toString());
 		String note = ((EditText)findViewById(R.id.notes)).getText().toString();
-		
+
 		Logic.getInstance(this).addNewFill(selected_year, selected_month, selected_day, odometer, trip, volume, isFullTank, price, note);
 		
 		Toast.makeText(this, "New fill added!", Toast.LENGTH_LONG).show();

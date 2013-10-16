@@ -41,7 +41,7 @@ public class Logic {
 	public boolean addNewFill(int year, int month, int day, double odometer, double trip, double volume, boolean fullTank, double price, String note) {
 		boolean success = true;
 		double price_volume = price / volume;
-		double conso_100 = (volume / trip) * 100;
+		double conso_100 = 0.0;
 
 		// Handle case when not filling totally the car
 		// - If "noFullTank" was checked, we don't fill conso_100 value
@@ -95,11 +95,9 @@ public class Logic {
 		return success;
 	}
 
-	public ArrayList<Map<String, String>> getPrettyFills() {
-		ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
-
+	public Cursor getFills() {
 		String[] projection = {
-				"rowid",
+				"rowid as _id",
 				FillEntry.COLUMN_NAME_DATE,
 				FillEntry.COLUMN_NAME_PRICE,
 				FillEntry.COLUMN_NAME_ODOMETER,
@@ -111,8 +109,9 @@ public class Logic {
 		String sortOrder =
 				FillEntry.COLUMN_NAME_DATE + " DESC";
 
+		Cursor cur = null;
 		try {
-			Cursor cur = db.query(
+			cur = db.query(
 					FillEntry.TABLE_NAME,                     // The table to query
 					projection,                               // The columns to return
 					null,                                     // The columns for the WHERE clause
@@ -121,33 +120,48 @@ public class Logic {
 					null,                                     // don't filter by row groups
 					sortOrder                                 // The sort order
 					);
+		} catch (SQLiteException e) {
+			// TODO Found a better way to handle non-existing table!
+			// Table not found... it is most probably empty
+			db.execSQL(FillsOpenHelper.SQL_CREATE_ENTRIES);
+		}
 
-			cur.moveToFirst();
-			while (cur.isAfterLast() == false) {
-				double conso_100 = UtilClass.parseDoubleSafely(cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_CONSO100)));
-				DecimalFormat df = new DecimalFormat("#.##");
-				String conso_100_str = df.format(conso_100);
-								
-				String title = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE))
-						+ " - "
-						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_PRICE)) + " €";
-				String subtitle = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_ODOMETER)) + " km"
-						+ " - "
-						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_TRIP)) + " km"
-						+ " - "
-						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l"
-						+ " - "
-						+ conso_100_str + " l/100";
-				
-				HashMap<String, String> item = new HashMap<String, String>();
-				item.put("_id", Long.toString(cur.getLong(cur.getColumnIndexOrThrow("rowid"))));
-				item.put("title", title);
-				item.put("subtitle", subtitle);
-				list.add(item);
+		return cur;
+	}
 
-				cur.moveToNext();
+	public ArrayList<Map<String, String>> getPrettyFills() {
+		ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
+
+		try {
+			Cursor cur = getFills();
+			if (cur != null) {
+				cur.moveToFirst();
+				while (cur.isAfterLast() == false) {
+					double conso_100 = UtilClass.parseDoubleSafely(cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_CONSO100)));
+					DecimalFormat df = new DecimalFormat("#.##");
+					String conso_100_str = df.format(conso_100);
+
+					String title = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE))
+							+ " - "
+							+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_PRICE)) + " €";
+					String subtitle = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_ODOMETER)) + " km"
+							+ " - "
+							+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_TRIP)) + " km"
+							+ " - "
+							+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l"
+							+ " - "
+							+ conso_100_str + " l/100";
+
+					HashMap<String, String> item = new HashMap<String, String>();
+					item.put("_id", Long.toString(cur.getLong(cur.getColumnIndexOrThrow("rowid"))));
+					item.put("title", title);
+					item.put("subtitle", subtitle);
+					list.add(item);
+
+					cur.moveToNext();
+				}
+				cur.close();
 			}
-			cur.close();
 		} catch (SQLiteException e) {
 			// TODO Found a better way to handle non-existing table!
 			// Table not found... it is most probably empty
@@ -156,7 +170,7 @@ public class Logic {
 
 		return list;
 	}
-	
+
 	public void removeFill(long rowid) {
 		db.execSQL("DELETE FROM " + FillContract.FillEntry.TABLE_NAME + " WHERE rowID =" + rowid);
 		System.out.println(rowid);
