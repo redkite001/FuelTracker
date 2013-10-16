@@ -1,5 +1,6 @@
 package be.redkite.fueltracker;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class Logic {
 	public boolean addNewFill(int year, int month, int day, double odometer, double trip, double volume, boolean fullTank, double price, String note) {
 		boolean success = true;
 		double price_volume = price / volume;
-		double conso_100 = 0.0;
+		double conso_100 = (volume / trip) * 100;
 
 		// Handle case when not filling totally the car
 		// - If "noFullTank" was checked, we don't fill conso_100 value
@@ -98,12 +99,13 @@ public class Logic {
 		ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
 
 		String[] projection = {
-				//				FillEntry._ID,
+				"rowid",
 				FillEntry.COLUMN_NAME_DATE,
 				FillEntry.COLUMN_NAME_PRICE,
 				FillEntry.COLUMN_NAME_ODOMETER,
 				FillEntry.COLUMN_NAME_TRIP,
-				FillEntry.COLUMN_NAME_VOLUME
+				FillEntry.COLUMN_NAME_VOLUME,
+				FillEntry.COLUMN_NAME_CONSO100
 		};
 
 		String sortOrder =
@@ -122,6 +124,10 @@ public class Logic {
 
 			cur.moveToFirst();
 			while (cur.isAfterLast() == false) {
+				double conso_100 = UtilClass.parseDoubleSafely(cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_CONSO100)));
+				DecimalFormat df = new DecimalFormat("#.##");
+				String conso_100_str = df.format(conso_100);
+								
 				String title = cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_DATE))
 						+ " - "
 						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_PRICE)) + " €";
@@ -129,9 +135,12 @@ public class Logic {
 						+ " - "
 						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_TRIP)) + " km"
 						+ " - "
-						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l";
+						+ cur.getString(cur.getColumnIndexOrThrow(FillEntry.COLUMN_NAME_VOLUME)) + " l"
+						+ " - "
+						+ conso_100_str + " l/100";
 				
 				HashMap<String, String> item = new HashMap<String, String>();
+				item.put("_id", Long.toString(cur.getLong(cur.getColumnIndexOrThrow("rowid"))));
 				item.put("title", title);
 				item.put("subtitle", subtitle);
 				list.add(item);
@@ -146,6 +155,11 @@ public class Logic {
 		}
 
 		return list;
+	}
+	
+	public void removeFill(long rowid) {
+		db.execSQL("DELETE FROM " + FillContract.FillEntry.TABLE_NAME + " WHERE rowID =" + rowid);
+		System.out.println(rowid);
 	}
 
 	public void clearDB() {

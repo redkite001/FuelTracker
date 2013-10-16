@@ -12,6 +12,7 @@ import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -21,11 +22,15 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.ListFragment;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -48,7 +53,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	 * The {@link ViewPager} that will host the section contents.
 	 */
 	ViewPager mViewPager;
-	
+
 	static final int ADD_NEW_FILL_REQUEST = 1;
 
 	@Override
@@ -134,9 +139,9 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == ADD_NEW_FILL_REQUEST) {
-	        if (resultCode == RESULT_OK) {
-        		refreshData();
-	        }
+			if (resultCode == RESULT_OK) {
+				refreshData();
+			}
 		}
 	}
 
@@ -149,20 +154,20 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 		Intent intent = new Intent(this, SettingsActivity.class);
 		startActivity(intent);
 	}
-	
+
 	private void clearDB() {
 		DialogFragment newFragment = new EraseDBDialogFragment();
-	    newFragment.show(getSupportFragmentManager(), "cleardb");
+		newFragment.show(getSupportFragmentManager(), "cleardb");
 	}
-	
+
 	public void onDialogAcceptedListener() {
 		refreshData();
-    }
-	
+	}
+
 	private void refreshData() {
 		m_fillListFragment.refresh();
 	}
-	
+
 
 	/**
 	 * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -235,7 +240,7 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
 		public static SimpleAdapter m_adapter;
 		public static ArrayList<Map<String, String>> m_data;
-		
+
 		@Override
 		public void onActivityCreated(Bundle savedInstanceState) {
 			super.onActivityCreated(savedInstanceState);
@@ -243,18 +248,56 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 			String[] from = { "title", "subtitle" };
 			int[] to = { android.R.id.text1, android.R.id.text2 };
 
-			System.out.println("NEW ADAPTER");
 			m_adapter = new SimpleAdapter(getActivity(), m_data, android.R.layout.simple_list_item_2, from, to);
 			setListAdapter(m_adapter);
+
+			registerForContextMenu(getListView());
+			//			getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
+			//
+			//				@Override
+			//	            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int pos, long id) {
+			//					Toast.makeText(getActivity(), "On long click listener", Toast.LENGTH_LONG).show();
+			//		            return true;
+			//	            }
+			//	        }); 
 		}
-		
-		@Override
+
+		/*		@Override
 		public void onListItemClick(ListView l, View v, int position, long id) {
 			super.onListItemClick(l, v, position, id);
 			HashMap<String, String> item = (HashMap<String, String>) getListAdapter().getItem(position);
 		    Toast.makeText(getActivity(), item.get("title") + " selected", Toast.LENGTH_LONG).show();
+		}*/
+
+		@Override
+		public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+			super.onCreateContextMenu(menu, v, menuInfo);
+
+			MenuInflater inflater = this.getActivity().getMenuInflater();
+			inflater.inflate(R.menu.fill_list_item, menu);
 		}
-		
+
+		@Override
+		public boolean onContextItemSelected(MenuItem item) {
+
+			AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+			switch (item.getItemId()) {
+
+			case R.id.action_edit:
+				System.out.println("RowID : " + info.id);
+				System.out.println("Position : " + info.position);
+				return true;
+
+			case R.id.action_delete:
+				Logic.getInstance(getActivity()).removeFill(info.id);
+				refresh();
+				return true;
+
+			default:
+				return super.onContextItemSelected(item);
+			}
+		}
+
 		public void refresh() {
 			m_data.clear();
 			m_data.addAll(Logic.getInstance(getActivity()).getPrettyFills());

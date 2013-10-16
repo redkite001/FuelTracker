@@ -94,11 +94,11 @@ public class NewFillActivity extends Activity implements OnDateSelectedListener 
 	}
 
 	public void addNewFill() {
-		double odometer = Double.parseDouble(((EditText)findViewById(R.id.odometer)).getText().toString());
-		double trip = Double.parseDouble(((EditText)findViewById(R.id.trip)).getText().toString());
-		double volume = Double.parseDouble(((EditText)findViewById(R.id.volume)).getText().toString());
+		double odometer = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.odometer)).getText().toString());
+		double trip = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.trip)).getText().toString());
+		double volume = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.volume)).getText().toString());
 		boolean isFullTank = ((CheckBox)findViewById(R.id.full_tank)).isActivated();
-		double price = Double.parseDouble(((EditText)findViewById(R.id.price)).getText().toString());
+		double price = UtilClass.parseDoubleSafely(((EditText)findViewById(R.id.price)).getText().toString());
 		String note = ((EditText)findViewById(R.id.notes)).getText().toString();
 		
 		Logic.getInstance(this).addNewFill(selected_year, selected_month, selected_day, odometer, trip, volume, isFullTank, price, note);

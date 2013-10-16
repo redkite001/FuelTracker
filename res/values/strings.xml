@@ -20,5 +20,7 @@
     <string name="cleardb_msg">You\'ll lose all recorded fills !</string>
     <string name="cleardb_ok">Erase</string>
     <string name="cancel">Cancel</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Remove</string>
 
 </resources>
